@@ -220,3 +220,51 @@ Wyświetl statystykę używanych komend (bez argumentów) w postaci posortowanej
 ```bash
 history | awk '{print $1}' | sort | uniq -c | sort -nr
 ```
+Zdefiniuj zmienną IMIE i przypisz jej swoje imię. Wyświetl zawartość tej zmiennej. Wyeksportuj tą zmienną i sprawdź, czy jest dostępna w nowym (potomnym) interpreterze.
+```bash
+export IMIE="Twoje Imię"
+echo $IMIE
+```
+Wyświetl listę zmiennych eksportowanych.
+```bash
+export
+```
+Zmień własny znak zachęty, modyfikując zmienną PS1.
+```bash
+PS1="NowyZnakZachęty> "
+```
+Napisz skrypt, który dla każdego z plików podanych jako argumenty wywołania posortuje jego zawartość.
+```bash
+#!/bin/bash
+
+for file in "$@"; do
+    if [ -f "$file" ]; then
+        echo "Sortowanie pliku: $file"
+        sort "$file" -o "$file"
+        echo "Plik został posortowany."
+        echo
+    else
+        echo "Błąd: $file nie jest plikiem."
+        echo
+    fi
+done
+```
+Napisz skrypt, który dla każdego z plików podanych jako argumenty wywołania wyświetli w kolejnych liniach 3 najczęściej powtarzające się w nim słowa.
+```bash
+#!/bin/bash
+
+for file in "$@"; do
+    if [ -f "$file" ]; then
+        echo "Najczęściej powtarzające się słowa w pliku: $file"
+        echo "=============================================="
+
+        cat "$file" | tr -s '[:space:]' '\n' | tr -d '[:punct:]' | tr '[:upper:]' '[:lower:]' | awk '{ count[$1]++ } END { for (word in count) print count[word], word }' | sort -rn | head -n 3
+
+        echo "=============================================="
+        echo
+    else
+        echo "Błąd: $file nie jest plikiem."
+        echo
+    fi
+done
+```
