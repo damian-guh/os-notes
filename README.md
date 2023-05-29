@@ -268,3 +268,74 @@ for file in "$@"; do
     fi
 done
 ```
+## Mips
+Pola rejestru koprocesora 0
+1.  **Status (Status Register)**: Pole to przechowuje informacje o stanie systemu, takie jak bity rejestru Status (SR), które kontrolują tryb pracy procesora (tryb użytkownika, tryb jądra, tryb monitora), maskowanie przerwań, bit umożliwiający lub blokujący przerwania oraz bity informujące o aktualnym trybie pracy procesora.
+    
+2.  **Przyczyna wyjątku (Cause)**: Pole to zawiera informacje o przyczynie ostatniego wyjątku (np. przerwania, wyjątku związanego z odwołaniem do pamięci), w tym numer wyjątku oraz bity informujące o źródle wyjątku.
+    
+3.  **Adres błędu (ErrorEPC)**: Pole to przechowuje adres instrukcji, która spowodowała wyjątek lub błąd.
+    
+4.  **Kontrola przekształceń adresowych (Address Translation Control)**: Pole to zawiera informacje dotyczące kontroli przekształceń adresowych, takie jak tryb pracy MMU (Memory Management Unit), tryb cache, tryb tłumaczenia adresów.
+    
+5.  **Obszar odwołań do wyjątków (Exception Handling Region)**: Pole to określa obszar pamięci, w którym znajdują się obszary odwołań do wyjątków i procedury obsługi wyjątków.
+
+Instrukcje związane z koprocesorem 0
+
+1.  **Zgłaszanie wyjątku (Exception Handling)**:
+    
+    -   `eret` (Exception Return): Instrukcja `eret` jest używana do powrotu z procedury obsługi wyjątku. Powoduje przełączenie kontekstu z trybu obsługi wyjątku do trybu, w którym wystąpił wyjątek. Instrukcja `eret` odczytuje zawartość rejestru koprocesora 0, aby przywrócić stan procesora sprzed wyjątku.
+2.  **Przenoszenie wartości (Move Value)**:
+    
+    -   `mfhi` (Move From HI): Instrukcja `mfhi` służy do przeniesienia zawartości rejestru HI do innego rejestru ogólnego. Rejestr HI przechowuje wynik operacji mnożenia lub dzielenia.
+    -   `mflo` (Move From LO): Instrukcja `mflo` służy do przeniesienia zawartości rejestru LO do innego rejestru ogólnego. Rejestr LO przechowuje resztę z operacji dzielenia lub wynik operacji modulo.
+3.  **Zapisywanie słowa (Store Word)**:
+    
+    -   `sw` (Store Word): Instrukcja `sw` służy do zapisywania słowa z rejestru ogólnego do pamięci. Adres docelowy jest obliczany na podstawie zawartości rejestru bazowego i przesunięcia. Na przykład: `sw $s1, offset($s2)` zapisuje wartość ze rejestru `$s1` do pamięci o adresie `$s2 + offset`.
+
+Obsługa wyjątków
+```asm
+# Obsługa wyjątku na procesorze MIPS
+
+.data
+exception_message: .asciiz "Wyjątek zarejestrowany.\n"
+
+.text
+.globl main
+
+main:
+    # Konfiguracja wektora przerwań
+    lui $k0, 0xFFFF # Adres bazy wektora przerwań
+    ori $k0, $k0, 0xFFF0
+
+    # Rejestracja procedury obsługi wyjątku
+    lui $k1, exception_handler
+    ori $k1, $k1, exception_handler
+
+    # Przypisanie adresu procedury obsługi wyjątku do wektora przerwań
+    sw $k1, 0($k0) # Wyjątek ogólny
+
+    # Wywołanie instrukcji, która spowoduje wyjątek
+    li $v0, 10
+    syscall
+
+    # Koniec programu
+    li $v0, 10
+    syscall
+
+exception_handler:
+    # Obsługa wyjątku - wypisanie komunikatu
+    li $v0, 4
+    la $a0, exception_message
+    syscall
+
+    # Powrót z obsługi wyjątku
+    jr $ra
+```
+Powyższy kod demonstruje obsługę ogólnego wyjątku na procesorze MIPS. Przykład zakłada, że wektor przerwań znajduje się na adresie bazy 0xFFFFFFF0, a procedura obsługi wyjątku jest zarejestrowana w wektorze pod tym adresem.
+
+Procedura `main` najpierw konfiguruje wektor przerwań, przypisując mu adres bazy i procedury obsługi wyjątku. Następnie wywołuje instrukcję, która spowoduje wyjątek (w tym przypadku, syscall o kodzie 10). Po obsłużeniu wyjątku, program wypisuje komunikat i kończy działanie.
+
+Procedura obsługi wyjątku `exception_handler` wypisuje komunikat za pomocą syscallu o kodzie 4 i zwraca się do procedury wywołującej za pomocą instrukcji `jr $ra`.
+
+Ważne jest, aby zaznaczyć, że obsługa wyjątków na procesorze MIPS może się różnić w zależności od implementacji i konkretnego systemu operacyjnego. Powyższy kod stanowi tylko ogólny przykład i może wymagać dostosowania do konkretnych potrzeb i środowiska pracy.
